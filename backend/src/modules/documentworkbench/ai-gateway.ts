@@ -1,4 +1,5 @@
 import type { Env } from '@/config/env'
+import { BadGatewayError } from '@/utils/http-error'
 import type {
   FinalizedDocument,
   FrameworkScore,
@@ -182,7 +183,16 @@ async function callChatCompletion(
       signal: controller.signal,
     })
     if (!response.ok) {
-      throw new Error(`AI gateway request failed with ${response.status}`)
+      let detail = ''
+      try {
+        const body = (await response.json()) as { message?: string; error?: string }
+        detail = body.message || body.error || ''
+      } catch {
+        detail = response.statusText || ''
+      }
+      throw BadGatewayError(
+        `AI 网关请求失败 (${response.status})${detail ? `：${detail}` : ''}`,
+      )
     }
     const body = (await response.json()) as ChatCompletionResponse
     const content = body.choices?.[0]?.message?.content

@@ -25,3 +25,5 @@ export const UnauthorizedError = (message = 'Unauthorized') => new AppError(mess
 export const ForbiddenError = (message = 'Forbidden') => new AppError(message, 403, 40300)
 
 export const ConflictError = (message = 'Conflict') => new AppError(message, 409, 40900)
+
+export const BadGatewayError = (message = 'Bad gateway') => new AppError(message, 502, 50200)

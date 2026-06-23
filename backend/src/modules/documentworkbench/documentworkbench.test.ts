@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { AppError } from '@/utils/http-error'
 import { createDeterministicAiGateway, createHttpAiGateway, extractJsonObject } from './ai-gateway'
 import { documentTypes } from './document-type-catalog'
 import { createDisabledLarkGateway } from './lark-gateway'
@@ -155,6 +156,38 @@ async function testHttpGatewayUsesAiForPreviewAndFinalize() {
   assert.equal(calls.length, 2)
 }
 
+async function testHttpGatewayReportsReadableGatewayErrors() {
+  const fetchMock: typeof fetch = async () =>
+    new Response(JSON.stringify({ message: 'invalid token' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+  const gateway = createHttpAiGateway(
+    {
+      AI_GATEWAY_API_KEY: 'bad-key',
+      AI_GATEWAY_BASE_URL: 'https://example.test/v1/chat/completions',
+      AI_GATEWAY_TIMEOUT_MS: 30000,
+    } as never,
+    fetchMock,
+  )
+
+  await assert.rejects(
+    () =>
+      gateway.recommend({
+        model: 'company-model',
+        documentType: documentTypes[0]!,
+        frameworks,
+        paragraphs: [{ id: 'p-001', index: 0, text: 'KR 达成 80%。' }],
+      }),
+    (error: unknown) =>
+      error instanceof AppError &&
+      error.statusCode === 502 &&
+      error.message.includes('AI 网关请求失败') &&
+      error.message.includes('401'),
+  )
+}
+
 function createInMemoryRepositoryForTest(sessions: Map<string, DocumentWorkbenchSession>) {
   return {
     async create(input: CreateSessionInput) {
@@ -234,6 +267,7 @@ testNormalizeDraft()
 testExtractJsonObject()
 await testDeterministicGateway()
 await testHttpGatewayUsesAiForPreviewAndFinalize()
+await testHttpGatewayReportsReadableGatewayErrors()
 await testMarkdownServiceFlow()
 
 console.log('document-workbench tests: OK')
