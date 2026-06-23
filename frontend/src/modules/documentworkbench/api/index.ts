@@ -1,5 +1,6 @@
 import { http } from '@/utils/request'
 import type {
+  AiPingResult,
   FinalizedDocument,
   FrameworkScore,
   ImportDraftInput,
@@ -12,6 +13,7 @@ import type {
 
 export const documentWorkbenchApi = {
   config: () => http.get<WorkbenchConfig>('/documentworkbench/config'),
+  pingAiGateway: () => http.post<AiPingResult>('/documentworkbench/ai-ping'),
   importDraft: (input: ImportDraftInput) =>
     http.post<ImportResponse>('/documentworkbench/import', input),
   recommend: (sessionId: string, model: string) =>

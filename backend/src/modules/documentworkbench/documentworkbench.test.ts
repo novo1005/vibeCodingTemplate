@@ -188,6 +188,30 @@ async function testHttpGatewayReportsReadableGatewayErrors() {
   )
 }
 
+async function testHttpGatewayPing() {
+  const gateway = createHttpAiGateway(
+    {
+      AI_GATEWAY_API_KEY: 'test-key',
+      AI_GATEWAY_BASE_URL: 'https://example.test/v1/chat/completions',
+      AI_GATEWAY_TIMEOUT_MS: 30000,
+    } as never,
+    async () =>
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: '{"ok":true}' } }],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+  )
+
+  assert.deepEqual(await gateway.ping({ model: 'company-model' }), {
+    ok: true,
+    status: 'ready',
+    message: 'AI 网关连通正常。',
+    model: 'company-model',
+  })
+}
+
 function testAiConfigStatus() {
   assert.deepEqual(
     getAiConfigStatus({
@@ -306,6 +330,7 @@ testExtractJsonObject()
 await testDeterministicGateway()
 await testHttpGatewayUsesAiForPreviewAndFinalize()
 await testHttpGatewayReportsReadableGatewayErrors()
+await testHttpGatewayPing()
 testAiConfigStatus()
 await testMarkdownServiceFlow()
 

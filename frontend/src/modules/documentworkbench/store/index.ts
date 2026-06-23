@@ -19,6 +19,13 @@ export const useDocumentWorkbenchStore = defineStore('document-workbench', () =>
   const defaultModel = ref('local')
   const selectedModel = ref('local')
   const aiConnected = ref(false)
+  const aiPingResult = ref<{
+    ok: boolean
+    status: 'missing-api-key' | 'model-local' | 'ready' | 'local-mode'
+    message: string
+    model: string
+  } | null>(null)
+  const aiPingLoading = ref(false)
   const aiStatus = ref<{
     status: 'missing-api-key' | 'model-local' | 'ready'
     message: string
@@ -65,6 +72,19 @@ export const useDocumentWorkbenchStore = defineStore('document-workbench', () =>
       documentTypes.value = config.documentTypes
     } catch (error) {
       setFailure(error)
+    }
+  }
+
+  async function pingAiGateway() {
+    aiPingLoading.value = true
+    errorMessage.value = ''
+    try {
+      aiPingResult.value = await documentWorkbenchApi.pingAiGateway()
+      aiConnected.value = aiPingResult.value.ok
+    } catch (error) {
+      setFailure(error)
+    } finally {
+      aiPingLoading.value = false
     }
   }
 
@@ -169,6 +189,8 @@ export const useDocumentWorkbenchStore = defineStore('document-workbench', () =>
     defaultModel,
     selectedModel,
     aiConnected,
+    aiPingResult,
+    aiPingLoading,
     aiStatus,
     larkConnected,
     documentTypes,
@@ -184,6 +206,7 @@ export const useDocumentWorkbenchStore = defineStore('document-workbench', () =>
     publishedUrl,
     errorMessage,
     loadConfig,
+    pingAiGateway,
     setDocumentType,
     importDraft,
     recommend,

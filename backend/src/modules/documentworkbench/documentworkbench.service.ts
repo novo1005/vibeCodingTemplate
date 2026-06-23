@@ -93,6 +93,20 @@ export function createDocumentWorkbenchService(deps: ServiceDeps) {
       }
     },
 
+    async pingAiGateway() {
+      const aiStatus = getAiConfigStatus(env)
+      if (aiStatus.status !== 'ready') {
+        return {
+          ok: false,
+          status: aiStatus.status,
+          message: aiStatus.message,
+          model: env.AI_GATEWAY_DEFAULT_MODEL,
+        }
+      }
+
+      return deps.aiGateway.ping({ model: env.AI_GATEWAY_DEFAULT_MODEL })
+    },
+
     async importDraft(input: DocumentWorkbenchImportBody) {
       const documentType = getDocumentType(input.documentType)
       if (!documentType) throw BadRequestError('Unsupported document type')

@@ -127,6 +127,13 @@ export interface WorkbenchConfig {
   larkConnected: boolean
 }
 
+export interface AiPingResult {
+  ok: boolean
+  status: 'missing-api-key' | 'model-local' | 'ready' | 'local-mode'
+  message: string
+  model: string
+}
+
 export interface SupplementInput {
   id: string
   question: string

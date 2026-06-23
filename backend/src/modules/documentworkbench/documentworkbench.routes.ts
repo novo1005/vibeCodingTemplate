@@ -3,6 +3,7 @@ import { documentWorkbenchController } from './documentworkbench.controller'
 
 export async function documentWorkbenchRoutes(app: FastifyInstance) {
   app.get('/config', documentWorkbenchController.getConfig)
+  app.post('/ai-ping', documentWorkbenchController.pingAiGateway)
   app.post('/import', documentWorkbenchController.importDraft)
   app.post('/:sessionId/recommend', documentWorkbenchController.recommend)
   app.post('/:sessionId/preview', documentWorkbenchController.preview)

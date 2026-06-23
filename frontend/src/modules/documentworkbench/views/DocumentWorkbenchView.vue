@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import BaseButton from '@/components/BaseButton/index.vue'
 import DocumentTypePicker from '../components/DocumentTypePicker.vue'
 import FinalizePanel from '../components/FinalizePanel.vue'
 import FrameworkSelector from '../components/FrameworkSelector.vue'
@@ -18,6 +19,8 @@ const {
   models,
   selectedModel,
   aiConnected,
+  aiPingResult,
+  aiPingLoading,
   aiStatus,
   status,
   errorMessage,
@@ -82,6 +85,10 @@ function finalizeDocument() {
 function publishDocument() {
   void store.publish(finalDocument.value?.title || originalTitle.value || '结构化文档')
 }
+
+function pingAiGateway() {
+  void store.pingAiGateway()
+}
 </script>
 
 <template>
@@ -98,11 +105,16 @@ function publishDocument() {
       </div>
     </header>
 
-    <p v-if="!aiConnected" class="document-workbench__warning">
-      {{ aiStatus.message }}
-      请在后端 <code>.env</code> 配置 <code>AI_GATEWAY_API_KEY</code>、
-      <code>AI_GATEWAY_DEFAULT_MODEL</code> 后重启服务。
-    </p>
+    <div v-if="!aiConnected" class="document-workbench__warning">
+      <p>
+        {{ aiPingResult?.message || aiStatus.message }}
+        请在后端 <code>.env</code> 配置 <code>AI_GATEWAY_API_KEY</code>、
+        <code>AI_GATEWAY_DEFAULT_MODEL</code> 后重启服务。
+      </p>
+      <BaseButton variant="secondary" size="sm" :loading="aiPingLoading" @click="pingAiGateway">
+        测试 AI 网关
+      </BaseButton>
+    </div>
 
     <p v-if="errorMessage" class="document-workbench__error">{{ errorMessage }}</p>
 

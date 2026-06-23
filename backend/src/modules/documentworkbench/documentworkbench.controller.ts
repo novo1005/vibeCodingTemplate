@@ -17,6 +17,10 @@ export const documentWorkbenchController = {
     return reply.send(success(documentWorkbenchService.getConfig()))
   },
 
+  async pingAiGateway(_req: FastifyRequest, reply: FastifyReply) {
+    return reply.send(success(await documentWorkbenchService.pingAiGateway()))
+  },
+
   async importDraft(req: FastifyRequest, reply: FastifyReply) {
     const input = DocumentWorkbenchImportBodySchema.parse(req.body)
     const data = await documentWorkbenchService.importDraft(input)

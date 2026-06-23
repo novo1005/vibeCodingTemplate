@@ -41,7 +41,15 @@ export interface FinalizeInput {
   skipDeAi: boolean
 }
 
+export interface AiGatewayPingResult {
+  ok: boolean
+  status: 'ready' | 'local-mode'
+  message: string
+  model: string
+}
+
 export interface AiGateway {
+  ping(input: { model: string }): Promise<AiGatewayPingResult>
   recommend(input: RecommendInput): Promise<FrameworkScore[]>
   preview(input: PreviewInput): Promise<StructuredPreview>
   qualityCheck(input: QualityCheckInput): Promise<QualityCheckItem[]>
@@ -92,6 +100,15 @@ function makeQualityChecks(documentType: DocumentTypeDefinition, markdown: strin
 
 export function createDeterministicAiGateway(): AiGateway {
   return {
+    async ping(input) {
+      return {
+        ok: false,
+        status: 'local-mode',
+        message: '当前使用本地规则模式，未连接真实 AI 网关。',
+        model: input.model,
+      }
+    },
+
     async recommend(input) {
       const preferred = input.documentType.preferredFrameworkIds
       return input.frameworks
@@ -215,6 +232,26 @@ function parseOrThrow<T>(name: string, schema: { parse: (value: unknown) => T },
 
 export function createHttpAiGateway(env: Env, fetcher: typeof fetch = fetch): AiGateway {
   return {
+    async ping(input) {
+      await callChatCompletion(env, input.model, [
+        {
+          role: 'system',
+          content: '只返回 JSON：{"ok":true}。用于检测 AI 网关连通性。',
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({ task: 'ping' }),
+        },
+      ], fetcher)
+
+      return {
+        ok: true,
+        status: 'ready',
+        message: 'AI 网关连通正常。',
+        model: input.model,
+      }
+    },
+
     async recommend(input) {
       const output = await callChatCompletion(env, input.model, [
         {
