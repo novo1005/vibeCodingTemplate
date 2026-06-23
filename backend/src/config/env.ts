@@ -14,6 +14,16 @@ const EnvSchema = z
     DB_DIALECT: z.enum(['sqlite', 'postgres']).default('sqlite'),
     DB_SQLITE_FILE: z.string().default('./data/dev.db'),
     DATABASE_URL: z.string().url().optional(),
+
+    AI_GATEWAY_BASE_URL: z
+      .string()
+      .url()
+      .default('https://ops-ai-gateway.yc345.tv/v1/chat/completions'),
+    AI_GATEWAY_API_KEY: z.string().optional(),
+    AI_GATEWAY_MODELS: z.string().default('local'),
+    AI_GATEWAY_DEFAULT_MODEL: z.string().default('local'),
+    AI_GATEWAY_TIMEOUT_MS: z.coerce.number().int().positive().default(30000),
+    AI_GATEWAY_REPAIR_ATTEMPTS: z.coerce.number().int().min(0).max(1).default(1),
   })
   .superRefine((value, ctx) => {
     if (value.DB_DIALECT === 'postgres' && !value.DATABASE_URL) {

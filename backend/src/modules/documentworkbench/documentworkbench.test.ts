@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { createDeterministicAiGateway, extractJsonObject } from './ai-gateway'
 import { documentTypes } from './document-type-catalog'
 import { normalizeDraft } from './normalizer'
 import { frameworks } from './framework-catalog'
@@ -58,10 +59,28 @@ function testNormalizeDraft() {
   assert.equal(result.paragraphs[1]?.text, '列表内容')
 }
 
+function testExtractJsonObject() {
+  assert.deepEqual(extractJsonObject('```json\n{"ok":true}\n```'), { ok: true })
+  assert.deepEqual(extractJsonObject('prefix {"ok":true} suffix'), { ok: true })
+}
+
+async function testDeterministicGateway() {
+  const gateway = createDeterministicAiGateway()
+  const recommendation = await gateway.recommend({
+    model: 'local',
+    documentType: documentTypes[0]!,
+    frameworks,
+    paragraphs: [{ id: 'p-001', index: 0, text: 'KR 达成 80%，需要复盘原因。' }],
+  })
+  assert.equal(recommendation[0]?.frameworkId, 'four-f')
+}
+
 testDocumentTypes()
 testFrameworks()
 testImportSchemaRequiresDocumentType()
 testPreviewSchemaAcceptsFramework()
 testNormalizeDraft()
+testExtractJsonObject()
+await testDeterministicGateway()
 
 console.log('document-workbench tests: OK')
