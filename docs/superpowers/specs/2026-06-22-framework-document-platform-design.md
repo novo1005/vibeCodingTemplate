@@ -2,17 +2,18 @@
 
 ## 目标
 
-构建一个个人优先、可扩展到公司内多人使用的文档工作台。用户提供飞书云文档链接或 Markdown 初稿，系统分析写作意图，从参考文档定义的表达框架中推荐最合适的 1–2 种，同时套用参考文档中的撰写规范和提交前 Checklist，将原文映射并重组为框架化成稿。用户可以切换框架、查看推荐理由与原文出处、补充缺失信息，最终在降低 AI 味后创建一份新的飞书云文档；原文始终保持不变。
+构建一个个人优先、可扩展到公司内多人使用的文档工作台。用户提供飞书云文档链接或 Markdown 初稿，并自行选择文档类型；系统不依赖内容意图识别来决定类型，而是在用户选择的类型下，从参考文档定义的表达框架中推荐最合适的 1–2 种，同时套用该类型的格式要求、写作规范和提交前 Checklist，将原文映射并重组为框架化成稿。用户可以切换框架、查看推荐理由与原文出处、补充缺失信息，最终在降低 AI 味后创建一份新的飞书云文档；原文始终保持不变。
 
-成功标准：用户能从一篇松散初稿出发，在一个工作台内完成“导入—推荐—比较—规范检查—补充—去 AI 味—生成”，得到结构清晰、事实边界明确、符合撰写要求、可直接提交的飞书文档。
+成功标准：用户能从一篇松散初稿出发，在一个工作台内完成“选择文档类型—导入—推荐—比较—规范检查—补充—去 AI 味—生成”，得到结构清晰、事实边界明确、符合该文档类型撰写要求、可直接提交的飞书文档。
 
 ## 产品边界
 
 ### 第一版包含
 
+- 用户在上传或导入前自行选择文档类型，第一版支持 OKR 复盘、用户调研报告、竞品分析报告、会议纪要。
 - 飞书云文档链接导入；无权限或未配置飞书时支持 Markdown 粘贴。
-- 工作汇报/复盘、调研/竞品分析两类内容意图识别。
 - 六种输出范式：PREP、金字塔原理、SCQA、4F、故事五要素、STAR。
+- 每种文档类型拥有独立的格式要求、写作规范、质量检查项和推荐框架偏好。类型由用户选择，不由 AI 自动判定；AI 只在选定类型内做框架推荐、结构化改写和规范检查。
 - 参考文档中的撰写规范规则集：摘要需要背景与核心结论；结论遵循“标题给判断 + 数据支撑 + 一句话总结”；信息层级清晰、结论前置、重点高亮；避免缺背景、bullet 不 MECE、通篇黑体、重点不突出、过度口语化。
 - 研究报告完成后自检 Checklist：提交前快速扫描、开头结论、中间数据与论证、结尾可执行建议、数据来源附录和 AI 审查。
 - 系统推荐首选与备选框架，显示匹配度和推荐理由；用户可手动切换任意框架。
@@ -29,8 +30,24 @@
 - 团队管理后台、角色权限、计费和用量统计。
 - 多人同时编辑、批注同步和完整历史版本系统。
 - 用户自定义新框架的可视化编辑器。
+- 自动识别文档类型并替用户选择类型。
 - PDF、Word 等二进制文档解析。
 - 自动覆盖或局部改写原飞书文档。
+
+## 文档类型
+
+文档类型是工作台的第一层约束，先于表达框架生效。用户选择类型后，系统使用该类型的格式要求、写作规范、质量检查项和框架推荐偏好；表达框架是第二层结构化方法，帮助同一类型下的内容选择更合适的叙述方式。
+
+第一版文档类型固定为：
+
+| 类型 ID | 类型名称 | 主要用途 | 框架推荐偏好 |
+| --- | --- | --- | --- |
+| `okr-review` | OKR 复盘 | 阶段目标进展、结果归因、问题复盘、下一步计划 | 4F、STAR、金字塔原理 |
+| `user-research` | 用户调研报告 | 研究问题、样本与方法、用户声音、洞察和建议 | 金字塔原理、SCQA |
+| `competitor-analysis` | 竞品分析报告 | 竞品选择、对比维度、差异结论、机会和建议 | 金字塔原理、SCQA、PREP |
+| `meeting-minutes` | 会议纪要 | 会议背景、讨论结论、决策、行动项和责任人 | PREP、金字塔原理 |
+
+具体格式要求和写作规范由用户后续提供，并以版本化配置保存。实现计划必须等这些类型规范补齐后再冻结。
 
 ## 六种框架定义
 
@@ -49,7 +66,7 @@
 
 ## 撰写规范与质量门禁
 
-参考文档同时提供输出框架和写作规范。系统不能只把初稿套入框架，还要检查生成结果是否符合提交要求。规范以可版本化的领域配置保存，不散落在提示词中。
+参考文档同时提供输出框架和写作规范。系统不能只把初稿套入框架，还要检查生成结果是否符合用户所选文档类型的提交要求。规范以可版本化的领域配置保存，不散落在提示词中。
 
 规范规则分为三类：
 
@@ -63,9 +80,9 @@
 
 ## 用户流程
 
-1. 用户进入工作台，粘贴飞书链接或 Markdown，选择公司网关允许的模型。
-2. 后端读取并规范化初稿，保留段落编号作为可追溯来源。
-3. AI 返回文档意图、六种框架匹配度、推荐理由、适用的规范规则集和首选/备选框架；后端以 Zod 严格校验。
+1. 用户进入工作台，先选择文档类型，再粘贴飞书链接或 Markdown，并选择公司网关允许的模型。
+2. 后端读取并规范化初稿，保留段落编号作为可追溯来源，同时保存用户选择的文档类型。
+3. AI 在用户选择的文档类型范围内返回六种框架匹配度、推荐理由、适用的规范规则集和首选/备选框架；后端以 Zod 严格校验。AI 不返回或覆盖文档类型。
 4. 工作台显示框架列表。用户接受推荐或切换框架。
 5. 后端按选定框架生成结构化预览。每个区块包含内容、来源段落、改写说明、证据状态和待补问题。
 6. 系统按撰写规范和 Checklist 生成质量检查结果，展示自动修正建议和必须补充的信息。
@@ -77,6 +94,7 @@
 
 工作台采用一个主页面和阶段状态，不拆成冗长向导：
 
+- 类型选择区：OKR 复盘、用户调研报告、竞品分析报告、会议纪要；用户必须先选类型才能开始分析。
 - 导入区：飞书链接、Markdown 兜底、模型选择、开始分析。
 - 左侧框架栏：六种框架、匹配度、首选/备选标记和推荐理由。
 - 主预览区：结构化成稿，支持“结构预览 / 原文对照 / 待补信息”三个视图。
@@ -106,9 +124,10 @@
 `controller → document-workbench service → Lark gateway / AI gateway / framework engine → repository → db interface`
 
 - `framework catalog`：六种框架及槽位的纯领域定义。
-- `framework recommender`：构造推荐请求，调用 AI 网关，并验证匹配度结果。
+- `document type catalog`：四种文档类型及其格式要求、写作规范、质量检查项和框架推荐偏好。
+- `framework recommender`：基于用户选择的文档类型构造推荐请求，调用 AI 网关，并验证匹配度结果。
 - `draft transformer`：按选定框架生成区块、来源映射和待补信息。
-- `writing standards checker`：根据参考文档规范与 Checklist 检查摘要、结论、层级、数据、用户声音、竞品分析、建议和来源附录。
+- `writing standards checker`：根据用户选择的文档类型、参考文档规范与 Checklist 检查摘要、结论、层级、数据、用户声音、竞品分析、建议和来源附录。
 - `de-ai finalizer`：在用户确认结构化版本后执行保真润色，降低 AI 味并保持事实、结构和来源映射不变。
 - `Lark document gateway`：隔离飞书读取、OAuth 和新文档创建细节。
 - `AI gateway`：隔离 `/v1/chat/completions` 请求格式、超时、重试和 JSON 提取。
@@ -128,11 +147,11 @@ Markdown 模式不要求飞书授权；发布飞书文档时才要求已建立�
 
 所有响应继续遵循 `{ code, data, message }`。
 
-- `GET /api/document-workbench/config`：返回可选模型、六种框架摘要和飞书连接状态。
+- `GET /api/document-workbench/config`：返回可选模型、四种文档类型、六种框架摘要和飞书连接状态。
 - `GET /api/document-workbench/lark/connect`：发起个人 OAuth。
 - `GET /api/document-workbench/lark/callback`：处理 OAuth 回调，仅保存服务端连接状态。
-- `POST /api/document-workbench/import`：输入飞书链接或 Markdown，返回处理会话和带稳定段落 ID 的规范化初稿。
-- `POST /api/document-workbench/:sessionId/recommend`：输入模型，返回六种匹配度、推荐理由、首选和备选框架。
+- `POST /api/document-workbench/import`：输入文档类型与飞书链接或 Markdown，返回处理会话和带稳定段落 ID 的规范化初稿。
+- `POST /api/document-workbench/:sessionId/recommend`：输入模型，返回用户所选文档类型下的六种匹配度、推荐理由、首选和备选框架。
 - `POST /api/document-workbench/:sessionId/preview`：输入框架 ID、模型和补充信息，返回框架化区块和规范检查初稿。
 - `POST /api/document-workbench/:sessionId/quality-check`：输入当前预览 ID 和模型，返回撰写规范与 Checklist 的逐项检查结果。
 - `PATCH /api/document-workbench/:sessionId/supplements`：保存用户补充信息。
@@ -143,6 +162,7 @@ Markdown 模式不要求飞书授权；发布飞书文档时才要求已建立�
 关键响应类型：
 
 - `FrameworkScore`：`frameworkId`、`score`、`reason`、`recommendedRank`。
+- `DocumentType`：`typeId`、`label`、`description`、`requiredSections`、`writingRules`、`qualityRules`、`preferredFrameworkIds`。
 - `StructuredSection`：`slotId`、`heading`、`content`、`sourceParagraphIds`、`rewriteNote`、`evidenceStatus`、`missingQuestion`。
 - `QualityCheckItem`：`ruleId`、`label`、`status`、`reason`、`suggestedRevision`、`requiresUserInput`、`relatedSectionIds`。
 - `StructuredPreview`：`frameworkId`、`title`、`summary`、`sections`、`qualityChecks`、`missingCount`、`markdown`。
@@ -150,7 +170,7 @@ Markdown 模式不要求飞书授权；发布飞书文档时才要求已建立�
 
 ## 数据存储
 
-`document_workbench_sessions` 由模块自己维护 SQLite 与 PostgreSQL 配对迁移。主要字段包括：字符串 ID、来源类型、原文标题、规范化内容 JSON 文本、推荐结果 JSON 文本、当前框架、补充信息 JSON 文本、预览 JSON 文本、质量检查 JSON 文本、终稿 JSON 文本、状态和 ISO 时间戳。
+`document_workbench_sessions` 由模块自己维护 SQLite 与 PostgreSQL 配对迁移。主要字段包括：字符串 ID、文档类型、来源类型、原文标题、规范化内容 JSON 文本、推荐结果 JSON 文本、当前框架、补充信息 JSON 文本、预览 JSON 文本、质量检查 JSON 文本、终稿 JSON 文本、状态和 ISO 时间戳。
 
 飞书 OAuth 连接与处理会话分离。连接数据至少包含用户标识、加密后的 refresh token、过期时间和更新时间。生产环境必须设置令牌加密密钥；开发环境允许使用单用户本地配置，但仍不把明文令牌写入日志。
 
@@ -158,7 +178,7 @@ Markdown 模式不要求飞书授权；发布飞书文档时才要求已建立�
 
 - 基础地址、API Key、模型白名单、默认模型、超时和重试次数来自后端环境变量。
 - 请求使用 OpenAI Chat Completions 兼容格式；模型由白名单校验后传给网关。
-- 推荐、重构、质量检查和去 AI 味终稿使用不同的系统提示和 Zod 输出 schema。
+- 推荐、重构、质量检查和去 AI 味终稿使用不同的系统提示和 Zod 输出 schema；所有提示都显式包含用户选择的文档类型和该类型规范。
 - 模型输出必须是 JSON；后端先去除可能的代码围栏，再解析和校验。
 - schema 不匹配时可进行一次携带校验错误的修复请求；第二次仍失败则返回可重试错误，不产生预览或飞书文档。
 - 提示词明确禁止新增未经原文或用户补充信息支持的事实。模型必须把证据不足的必需槽位标记为 `missing`。
@@ -167,6 +187,7 @@ Markdown 模式不要求飞书授权；发布飞书文档时才要求已建立�
 ## 错误处理
 
 - 飞书链接无效：在导入阶段阻止继续，并提示正确链接格式。
+- 未选择文档类型：在导入阶段阻止继续，提示用户先选择 OKR 复盘、用户调研报告、竞品分析报告或会议纪要之一。
 - 飞书无权限或授权过期：保留页面输入，提示重新授权；不回退为“读取到空文档”。
 - AI 网关超时或限流：使用有上限的重试，返回可重试状态并保留会话。
 - AI 返回非法 JSON：执行一次修复请求；仍失败则展示结构化错误，不写飞书。
@@ -196,6 +217,7 @@ Markdown 模式不要求飞书授权；发布飞书文档时才要求已建立�
 - 后端 schema 是 API 单一事实源，前端类型逐字段镜像。
 - `/api/document-workbench` 是唯一业务前缀。
 - 框架 ID 固定为 `prep`、`pyramid`、`scqa`、`four-f`、`story-five`、`star`。
+- 文档类型 ID 固定为 `okr-review`、`user-research`、`competitor-analysis`、`meeting-minutes`；会话创建后不自动变更类型，用户如需换类型需要重新分析。
 - 所有来源映射只引用规范化段落 ID，不向模型暴露数据库内部 ID。
 - 发布必须携带显式 `confirmed: true`，service 再次验证当前终稿存在且无未保存变更；如果用户选择跳过去 AI 味，则验证当前结构化预览和风险确认记录存在。
 
@@ -204,7 +226,7 @@ Markdown 模式不要求飞书授权；发布飞书文档时才要求已建立�
 1. 安装仓库 Superpowers，确认前后端依赖与基线验证结果。
 2. 使用仓库 scaffold 脚本创建前后端 `document-workbench` 模块骨架。
 3. 先写失败测试和后端 schema，再实现框架目录、AI 结果校验和纯函数映射。
-4. 实现撰写规范目录、质量检查 schema、去 AI 味终稿 schema 和对应纯函数边界。
+4. 实现文档类型目录、撰写规范目录、质量检查 schema、去 AI 味终稿 schema 和对应纯函数边界。
 5. 添加会话迁移与 repository，保持 SQLite/PostgreSQL 配对。
 6. 实现公司 AI 网关与飞书文档 gateway 的测试替身和适配器。
 7. 完成 import、recommend、preview、quality-check、supplements、finalize、publish 和 export API。
@@ -214,7 +236,7 @@ Markdown 模式不要求飞书授权；发布飞书文档时才要求已建立�
 
 ## Verification
 
-- 后端单元测试：六种框架槽位、撰写规范规则、模型输出 schema、来源映射、缺失信息、去 AI 味保真约束、幂等发布。
+- 后端单元测试：四种文档类型配置、六种框架槽位、撰写规范规则、模型输出 schema、来源映射、缺失信息、去 AI 味保真约束、幂等发布。
 - 后端集成测试：Markdown 导入到预览；质量检查；去 AI 味终稿；飞书 gateway 测试替身导入与发布；网关异常重试。
 - 前端组件与 store 测试：状态流转、框架切换、上一个预览保留、规范检查确认、待补信息、去 AI 味预览和发布确认。
 - API 合同测试：后端 Zod 字段、前端类型和路径完全对齐。
