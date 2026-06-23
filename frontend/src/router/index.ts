@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
+import { documentWorkbenchRoutes } from '@/modules/documentworkbench'
 import { todoRoutes } from '@/modules/todo'
 
 const routes: RouteRecordRaw[] = [
@@ -13,6 +14,7 @@ const routes: RouteRecordRaw[] = [
         name: 'home',
         redirect: { name: 'todo-list' },
       },
+      ...documentWorkbenchRoutes,
       ...todoRoutes,
     ],
   },

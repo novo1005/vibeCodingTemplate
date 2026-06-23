@@ -4,7 +4,7 @@
 
 **Goal:** Build a local full-stack document workbench where a user selects a document type, imports a Feishu link or Markdown draft, generates a structured version under the selected writing rules, quality-checks it, reduces AI tone, and publishes or exports the result.
 
-**Architecture:** Add one closed-loop backend module and one closed-loop frontend module named `document-workbench`. Backend owns document type rules, framework rules, session persistence, AI gateway, Lark gateway, and API contracts; frontend owns the workbench route, API client, Pinia store, and module-private UI components. Keep all business code inside the module; only route registration, env config, and truly generic UI primitives are shared.
+**Architecture:** Add one closed-loop backend module and one closed-loop frontend module named `documentworkbench`. Backend owns document type rules, framework rules, session persistence, AI gateway, Lark gateway, and API contracts; frontend owns the workbench route, API client, Pinia store, and module-private UI components. Keep all business code inside the module; only route registration, env config, and truly generic UI primitives are shared.
 
 **Tech Stack:** Backend Node.js + Fastify + TypeScript + zod + SQLite/Postgres migrations; frontend Vue 3 + TypeScript + Pinia + Vue Router + Less; company AI gateway is OpenAI Chat Completions compatible at `/v1/chat/completions`.
 
@@ -29,9 +29,9 @@
 
 **Change boundary**
 
-- Create `backend/src/modules/document-workbench/`.
+- Create `backend/src/modules/documentworkbench/`.
 - Modify `backend/src/routes.ts`, `backend/src/config/env.ts`, and `backend/.env.example`.
-- Create `frontend/src/modules/document-workbench/`.
+- Create `frontend/src/modules/documentworkbench/`.
 - Modify `frontend/src/router/index.ts`.
 - Add generic frontend primitives only if used outside this module; otherwise keep UI components module-private.
 - Do not modify todo business logic.
@@ -39,7 +39,7 @@
 
 **Contracts**
 
-- Backend API prefix: `/api/document-workbench`.
+- Backend API prefix: `/api/documentworkbench`.
 - Document type IDs: `okr-review`, `user-research`, `competitor-analysis`, `meeting-minutes`.
 - Framework IDs: `prep`, `pyramid`, `scqa`, `four-f`, `story-five`, `star`.
 - API response envelope remains `{ code, data, message }`.
@@ -69,21 +69,21 @@
 
 ### Backend files to create
 
-- `backend/src/modules/document-workbench/document-workbench.schema.ts` — all zod request/response/path schemas and inferred DTOs.
-- `backend/src/modules/document-workbench/document-workbench.types.ts` — DB row/domain types inferred from schemas plus gateway interfaces.
-- `backend/src/modules/document-workbench/document-type-catalog.ts` — four document type rules, section templates, methodology rules, and quality rules.
-- `backend/src/modules/document-workbench/framework-catalog.ts` — six framework definitions and slot metadata.
-- `backend/src/modules/document-workbench/normalizer.ts` — markdown/text normalization into stable paragraph IDs.
-- `backend/src/modules/document-workbench/ai-gateway.ts` — company gateway HTTP client, JSON extraction, schema validation, repair retry.
-- `backend/src/modules/document-workbench/lark-gateway.ts` — Feishu URL parsing, import/publish gateway interface, disabled-mode errors when env is missing.
-- `backend/src/modules/document-workbench/document-workbench.repository.ts` — session persistence through `@/db`.
-- `backend/src/modules/document-workbench/document-workbench.service.ts` — import, recommend, preview, quality-check, supplement, finalize, publish, export orchestration.
-- `backend/src/modules/document-workbench/document-workbench.controller.ts` — zod parsing and `success()` responses.
-- `backend/src/modules/document-workbench/document-workbench.routes.ts` — Fastify route registration under module prefix.
-- `backend/src/modules/document-workbench/index.ts` — module plugin export.
-- `backend/src/modules/document-workbench/migrations/sqlite/0002_create_document_workbench.sql` — SQLite session table.
-- `backend/src/modules/document-workbench/migrations/pg/0002_create_document_workbench.sql` — Postgres session table using portable JSON-as-text columns.
-- `backend/src/modules/document-workbench/document-workbench.test.ts` — `tsx`-run unit checks for catalogs, normalization, schema parsing, repository mapping, and service fakes.
+- `backend/src/modules/documentworkbench/documentworkbench.schema.ts` — all zod request/response/path schemas and inferred DTOs.
+- `backend/src/modules/documentworkbench/documentworkbench.types.ts` — DB row/domain types inferred from schemas plus gateway interfaces.
+- `backend/src/modules/documentworkbench/document-type-catalog.ts` — four document type rules, section templates, methodology rules, and quality rules.
+- `backend/src/modules/documentworkbench/framework-catalog.ts` — six framework definitions and slot metadata.
+- `backend/src/modules/documentworkbench/normalizer.ts` — markdown/text normalization into stable paragraph IDs.
+- `backend/src/modules/documentworkbench/ai-gateway.ts` — company gateway HTTP client, JSON extraction, schema validation, repair retry.
+- `backend/src/modules/documentworkbench/lark-gateway.ts` — Feishu URL parsing, import/publish gateway interface, disabled-mode errors when env is missing.
+- `backend/src/modules/documentworkbench/documentworkbench.repository.ts` — session persistence through `@/db`.
+- `backend/src/modules/documentworkbench/documentworkbench.service.ts` — import, recommend, preview, quality-check, supplement, finalize, publish, export orchestration.
+- `backend/src/modules/documentworkbench/documentworkbench.controller.ts` — zod parsing and `success()` responses.
+- `backend/src/modules/documentworkbench/documentworkbench.routes.ts` — Fastify route registration under module prefix.
+- `backend/src/modules/documentworkbench/index.ts` — module plugin export.
+- `backend/src/modules/documentworkbench/migrations/sqlite/0002_create_document_workbench.sql` — SQLite session table.
+- `backend/src/modules/documentworkbench/migrations/pg/0002_create_document_workbench.sql` — Postgres session table using portable JSON-as-text columns.
+- `backend/src/modules/documentworkbench/documentworkbench.test.ts` — `tsx`-run unit checks for catalogs, normalization, schema parsing, repository mapping, and service fakes.
 
 ### Backend files to modify
 
@@ -94,19 +94,19 @@
 
 ### Frontend files to create
 
-- `frontend/src/modules/document-workbench/types/index.ts` — mirror backend DTO fields used by UI.
-- `frontend/src/modules/document-workbench/api/index.ts` — API client using `http`.
-- `frontend/src/modules/document-workbench/store/index.ts` — Pinia state machine.
-- `frontend/src/modules/document-workbench/components/DocumentTypePicker.vue` — required document type selector.
-- `frontend/src/modules/document-workbench/components/SourceInputPanel.vue` — Feishu link / Markdown input and model select.
-- `frontend/src/modules/document-workbench/components/FrameworkSelector.vue` — framework scores and manual switch.
-- `frontend/src/modules/document-workbench/components/StructuredPreview.vue` — preview sections and source markers.
-- `frontend/src/modules/document-workbench/components/QualityCheckPanel.vue` — passed/revision/missing quality checks.
-- `frontend/src/modules/document-workbench/components/FinalizePanel.vue` — de-AI notes, final document, publish/export controls.
-- `frontend/src/modules/document-workbench/views/DocumentWorkbenchView.vue` — page composition.
-- `frontend/src/modules/document-workbench/routes.ts` — module route list.
-- `frontend/src/modules/document-workbench/index.ts` — route export.
-- `frontend/src/modules/document-workbench/type-contracts.ts` — compile-time contract sample imported nowhere, included by `vue-tsc`.
+- `frontend/src/modules/documentworkbench/types/index.ts` — mirror backend DTO fields used by UI.
+- `frontend/src/modules/documentworkbench/api/index.ts` — API client using `http`.
+- `frontend/src/modules/documentworkbench/store/index.ts` — Pinia state machine.
+- `frontend/src/modules/documentworkbench/components/DocumentTypePicker.vue` — required document type selector.
+- `frontend/src/modules/documentworkbench/components/SourceInputPanel.vue` — Feishu link / Markdown input and model select.
+- `frontend/src/modules/documentworkbench/components/FrameworkSelector.vue` — framework scores and manual switch.
+- `frontend/src/modules/documentworkbench/components/StructuredPreview.vue` — preview sections and source markers.
+- `frontend/src/modules/documentworkbench/components/QualityCheckPanel.vue` — passed/revision/missing quality checks.
+- `frontend/src/modules/documentworkbench/components/FinalizePanel.vue` — de-AI notes, final document, publish/export controls.
+- `frontend/src/modules/documentworkbench/views/DocumentWorkbenchView.vue` — page composition.
+- `frontend/src/modules/documentworkbench/routes.ts` — module route list.
+- `frontend/src/modules/documentworkbench/index.ts` — route export.
+- `frontend/src/modules/documentworkbench/type-contracts.ts` — compile-time contract sample imported nowhere, included by `vue-tsc`.
 
 ### Frontend files to modify
 
@@ -169,8 +169,8 @@ If no files changed, do not commit. If execution created local lockfile or gener
 ### Task 1: Scaffold closed-loop modules
 
 **Files:**
-- Create: `backend/src/modules/document-workbench/**`
-- Create: `frontend/src/modules/document-workbench/**`
+- Create: `backend/src/modules/documentworkbench/**`
+- Create: `frontend/src/modules/documentworkbench/**`
 - Modify only through scaffold scripts first.
 
 - [ ] **Step 1: Run backend scaffold**
@@ -178,20 +178,20 @@ If no files changed, do not commit. If execution created local lockfile or gener
 Run:
 
 ```bash
-node .agents/skills/vibecoding-backend-module/scripts/scaffold.mjs document-workbench
+node .agents/skills/vibecoding-backend-module/scripts/scaffold.mjs documentworkbench
 ```
 
-Expected: `backend/src/modules/document-workbench/` exists with schema, types, repository, service, controller, routes, index, and migration folders.
+Expected: `backend/src/modules/documentworkbench/` exists with schema, types, repository, service, controller, routes, index, and migration folders.
 
 - [ ] **Step 2: Run frontend scaffold**
 
 Run:
 
 ```bash
-node .agents/skills/vibecoding-frontend-module/scripts/scaffold.mjs document-workbench
+node .agents/skills/vibecoding-frontend-module/scripts/scaffold.mjs documentworkbench
 ```
 
-Expected: `frontend/src/modules/document-workbench/` exists with api, types, store, components, views, routes, and index.
+Expected: `frontend/src/modules/documentworkbench/` exists with api, types, store, components, views, routes, and index.
 
 - [ ] **Step 3: Run architecture verify after scaffolding**
 
@@ -208,7 +208,7 @@ Expected: module anatomy checks pass or report only scaffold-specific rename iss
 Run:
 
 ```bash
-git add backend/src/modules/document-workbench frontend/src/modules/document-workbench
+git add backend/src/modules/documentworkbench frontend/src/modules/documentworkbench
 git commit -m "chore: scaffold document workbench modules"
 ```
 
@@ -220,25 +220,25 @@ Expected: commit created.
 
 **Files:**
 - Modify: `backend/package.json`
-- Create/Modify: `backend/src/modules/document-workbench/document-workbench.schema.ts`
-- Create/Modify: `backend/src/modules/document-workbench/document-workbench.types.ts`
-- Create: `backend/src/modules/document-workbench/document-type-catalog.ts`
-- Create: `backend/src/modules/document-workbench/framework-catalog.ts`
-- Create: `backend/src/modules/document-workbench/document-workbench.test.ts`
+- Create/Modify: `backend/src/modules/documentworkbench/documentworkbench.schema.ts`
+- Create/Modify: `backend/src/modules/documentworkbench/documentworkbench.types.ts`
+- Create: `backend/src/modules/documentworkbench/document-type-catalog.ts`
+- Create: `backend/src/modules/documentworkbench/framework-catalog.ts`
+- Create: `backend/src/modules/documentworkbench/documentworkbench.test.ts`
 
 - [ ] **Step 1: Add a backend module test script**
 
 Modify `backend/package.json` scripts to include:
 
 ```json
-"test:document-workbench": "tsx src/modules/document-workbench/document-workbench.test.ts"
+"test:document-workbench": "tsx src/modules/documentworkbench/documentworkbench.test.ts"
 ```
 
 Keep existing scripts unchanged.
 
 - [ ] **Step 2: Write the failing catalog/schema test**
 
-Create `backend/src/modules/document-workbench/document-workbench.test.ts` with:
+Create `backend/src/modules/documentworkbench/documentworkbench.test.ts` with:
 
 ```ts
 import assert from 'node:assert/strict'
@@ -247,7 +247,7 @@ import { frameworks } from './framework-catalog'
 import {
   DocumentWorkbenchImportBodySchema,
   DocumentWorkbenchPreviewBodySchema,
-} from './document-workbench.schema'
+} from './documentworkbench.schema'
 
 function testDocumentTypes() {
   assert.equal(documentTypes.length, 4)
@@ -305,7 +305,7 @@ cd backend && npm run test:document-workbench
 
 Expected: FAIL with module-not-found errors for `document-type-catalog`, `framework-catalog`, or schema exports.
 
-- [ ] **Step 4: Implement `document-workbench.schema.ts`**
+- [ ] **Step 4: Implement `documentworkbench.schema.ts`**
 
 Replace the scaffold schema with zod schemas covering:
 
@@ -446,7 +446,7 @@ export type DocumentWorkbenchImportBody = z.infer<typeof DocumentWorkbenchImport
 export type DocumentWorkbenchPreviewBody = z.infer<typeof DocumentWorkbenchPreviewBodySchema>
 ```
 
-- [ ] **Step 5: Implement `document-workbench.types.ts`**
+- [ ] **Step 5: Implement `documentworkbench.types.ts`**
 
 Define:
 
@@ -459,7 +459,7 @@ import type {
   NormalizedParagraph,
   QualityCheckItem,
   StructuredPreview,
-} from './document-workbench.schema'
+} from './documentworkbench.schema'
 
 export type SessionStatus =
   | 'imported'
@@ -673,7 +673,7 @@ Expected: no TypeScript errors.
 Run:
 
 ```bash
-git add backend/package.json backend/src/modules/document-workbench
+git add backend/package.json backend/src/modules/documentworkbench
 git commit -m "feat: add document workbench contracts"
 ```
 
@@ -684,11 +684,11 @@ Expected: commit created.
 ### Task 3: Normalization, migrations, and repository
 
 **Files:**
-- Create: `backend/src/modules/document-workbench/normalizer.ts`
-- Modify: `backend/src/modules/document-workbench/document-workbench.repository.ts`
-- Create: `backend/src/modules/document-workbench/migrations/sqlite/0002_create_document_workbench.sql`
-- Create: `backend/src/modules/document-workbench/migrations/pg/0002_create_document_workbench.sql`
-- Modify: `backend/src/modules/document-workbench/document-workbench.test.ts`
+- Create: `backend/src/modules/documentworkbench/normalizer.ts`
+- Modify: `backend/src/modules/documentworkbench/documentworkbench.repository.ts`
+- Create: `backend/src/modules/documentworkbench/migrations/sqlite/0002_create_document_workbench.sql`
+- Create: `backend/src/modules/documentworkbench/migrations/pg/0002_create_document_workbench.sql`
+- Modify: `backend/src/modules/documentworkbench/documentworkbench.test.ts`
 
 - [ ] **Step 1: Add failing normalization tests**
 
@@ -755,7 +755,7 @@ export function normalizeDraft(input: NormalizeDraftInput) {
 
 - [ ] **Step 4: Create SQLite migration**
 
-Create `backend/src/modules/document-workbench/migrations/sqlite/0002_create_document_workbench.sql`:
+Create `backend/src/modules/documentworkbench/migrations/sqlite/0002_create_document_workbench.sql`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS document_workbench_sessions (
@@ -781,7 +781,7 @@ CREATE TABLE IF NOT EXISTS document_workbench_sessions (
 
 - [ ] **Step 5: Create Postgres migration**
 
-Create `backend/src/modules/document-workbench/migrations/pg/0002_create_document_workbench.sql`:
+Create `backend/src/modules/documentworkbench/migrations/pg/0002_create_document_workbench.sql`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS document_workbench_sessions (
@@ -807,7 +807,7 @@ CREATE TABLE IF NOT EXISTS document_workbench_sessions (
 
 - [ ] **Step 6: Implement repository mapping**
 
-In `document-workbench.repository.ts`, expose:
+In `documentworkbench.repository.ts`, expose:
 
 ```ts
 export interface CreateSessionInput {
@@ -845,7 +845,7 @@ Expected: tests pass and no TypeScript errors.
 Run:
 
 ```bash
-git add backend/src/modules/document-workbench
+git add backend/src/modules/documentworkbench
 git commit -m "feat: persist document workbench sessions"
 ```
 
@@ -858,8 +858,8 @@ Expected: commit created.
 **Files:**
 - Modify: `backend/src/config/env.ts`
 - Modify: `backend/.env.example`
-- Create: `backend/src/modules/document-workbench/ai-gateway.ts`
-- Modify: `backend/src/modules/document-workbench/document-workbench.test.ts`
+- Create: `backend/src/modules/documentworkbench/ai-gateway.ts`
+- Modify: `backend/src/modules/documentworkbench/documentworkbench.test.ts`
 
 - [ ] **Step 1: Add failing AI JSON extraction tests**
 
@@ -963,7 +963,7 @@ Expected: pass.
 Run:
 
 ```bash
-git add backend/src/config/env.ts backend/.env.example backend/src/modules/document-workbench
+git add backend/src/config/env.ts backend/.env.example backend/src/modules/documentworkbench
 git commit -m "feat: add document workbench ai gateway"
 ```
 
@@ -974,16 +974,16 @@ Expected: commit created.
 ### Task 5: Lark gateway and backend service orchestration
 
 **Files:**
-- Create: `backend/src/modules/document-workbench/lark-gateway.ts`
-- Modify: `backend/src/modules/document-workbench/document-workbench.service.ts`
-- Modify: `backend/src/modules/document-workbench/document-workbench.test.ts`
+- Create: `backend/src/modules/documentworkbench/lark-gateway.ts`
+- Modify: `backend/src/modules/documentworkbench/documentworkbench.service.ts`
+- Modify: `backend/src/modules/documentworkbench/documentworkbench.test.ts`
 
 - [ ] **Step 1: Add failing service flow test**
 
 Append:
 
 ```ts
-import { createDocumentWorkbenchService } from './document-workbench.service'
+import { createDocumentWorkbenchService } from './documentworkbench.service'
 
 async function testMarkdownServiceFlow() {
   const sessions = new Map<string, DocumentWorkbenchSession>()
@@ -1090,7 +1090,7 @@ Add `createHttpLarkGateway(env)` only if `LARK_APP_ID`, `LARK_APP_SECRET`, and r
 
 - [ ] **Step 4: Implement service factory**
 
-In `document-workbench.service.ts`, export `createDocumentWorkbenchService(deps)` and a default service using real repository and configured gateways. Implement methods:
+In `documentworkbench.service.ts`, export `createDocumentWorkbenchService(deps)` and a default service using real repository and configured gateways. Implement methods:
 
 - `getConfig()`
 - `importDraft(input)`
@@ -1127,7 +1127,7 @@ Expected: pass.
 Run:
 
 ```bash
-git add backend/src/modules/document-workbench
+git add backend/src/modules/documentworkbench
 git commit -m "feat: orchestrate document workbench service"
 ```
 
@@ -1138,9 +1138,9 @@ Expected: commit created.
 ### Task 6: Backend controllers, routes, and registration
 
 **Files:**
-- Modify: `backend/src/modules/document-workbench/document-workbench.controller.ts`
-- Modify: `backend/src/modules/document-workbench/document-workbench.routes.ts`
-- Modify: `backend/src/modules/document-workbench/index.ts`
+- Modify: `backend/src/modules/documentworkbench/documentworkbench.controller.ts`
+- Modify: `backend/src/modules/documentworkbench/documentworkbench.routes.ts`
+- Modify: `backend/src/modules/documentworkbench/index.ts`
 - Modify: `backend/src/routes.ts`
 
 - [ ] **Step 1: Implement controller methods**
@@ -1177,7 +1177,7 @@ fastify.get('/:sessionId/export.md', controller.exportMarkdown)
 
 - [ ] **Step 3: Implement module index**
 
-Use Fastify plugin and prefix `/api/document-workbench`, mirroring todo module style.
+Use Fastify plugin and prefix `/api/documentworkbench`, mirroring todo module style.
 
 - [ ] **Step 4: Register in root routes**
 
@@ -1198,7 +1198,7 @@ Expected: all pass.
 Run:
 
 ```bash
-git add backend/src/routes.ts backend/src/modules/document-workbench
+git add backend/src/routes.ts backend/src/modules/documentworkbench
 git commit -m "feat: expose document workbench api"
 ```
 
@@ -1209,14 +1209,14 @@ Expected: commit created.
 ### Task 7: Frontend contracts, API client, and store
 
 **Files:**
-- Modify/Create: `frontend/src/modules/document-workbench/types/index.ts`
-- Modify/Create: `frontend/src/modules/document-workbench/api/index.ts`
-- Modify/Create: `frontend/src/modules/document-workbench/store/index.ts`
-- Create: `frontend/src/modules/document-workbench/type-contracts.ts`
+- Modify/Create: `frontend/src/modules/documentworkbench/types/index.ts`
+- Modify/Create: `frontend/src/modules/documentworkbench/api/index.ts`
+- Modify/Create: `frontend/src/modules/documentworkbench/store/index.ts`
+- Create: `frontend/src/modules/documentworkbench/type-contracts.ts`
 
 - [ ] **Step 1: Write failing frontend contract file**
 
-Create `frontend/src/modules/document-workbench/type-contracts.ts`:
+Create `frontend/src/modules/documentworkbench/type-contracts.ts`:
 
 ```ts
 import type { DocumentType, FrameworkScore, StructuredPreview } from './types'
@@ -1381,19 +1381,19 @@ export interface ImportResponse {
 }
 
 export const documentWorkbenchApi = {
-  config: () => http.get<WorkbenchConfig>('/document-workbench/config'),
+  config: () => http.get<WorkbenchConfig>('/documentworkbench/config'),
   importDraft: (input: { documentType: string; sourceType: 'lark' | 'markdown'; larkUrl?: string; markdown?: string }) =>
-    http.post<ImportResponse>('/document-workbench/import', input),
+    http.post<ImportResponse>('/documentworkbench/import', input),
   recommend: (sessionId: string, model: string) =>
-    http.post<FrameworkScore[]>(`/document-workbench/${sessionId}/recommend`, { model }),
+    http.post<FrameworkScore[]>(`/documentworkbench/${sessionId}/recommend`, { model }),
   preview: (sessionId: string, input: { frameworkId: FrameworkId; model: string; supplements: unknown[] }) =>
-    http.post<StructuredPreview>(`/document-workbench/${sessionId}/preview`, input),
+    http.post<StructuredPreview>(`/documentworkbench/${sessionId}/preview`, input),
   qualityCheck: (sessionId: string, model: string) =>
-    http.post<StructuredPreview['qualityChecks']>(`/document-workbench/${sessionId}/quality-check`, { model }),
+    http.post<StructuredPreview['qualityChecks']>(`/documentworkbench/${sessionId}/quality-check`, { model }),
   finalize: (sessionId: string, input: { model: string; acceptedQualityRuleIds: string[]; skipDeAi: boolean }) =>
-    http.post<FinalizedDocument>(`/document-workbench/${sessionId}/finalize`, input),
+    http.post<FinalizedDocument>(`/documentworkbench/${sessionId}/finalize`, input),
   publish: (sessionId: string, input: { title: string; confirmed: true }) =>
-    http.post<{ url: string }>(`/document-workbench/${sessionId}/publish`, input),
+    http.post<{ url: string }>(`/documentworkbench/${sessionId}/publish`, input),
 }
 ```
 
@@ -1444,7 +1444,7 @@ Expected: pass.
 Run:
 
 ```bash
-git add frontend/src/modules/document-workbench
+git add frontend/src/modules/documentworkbench
 git commit -m "feat: add document workbench frontend contracts"
 ```
 
@@ -1455,10 +1455,10 @@ Expected: commit created.
 ### Task 8: Frontend workbench UI and routing
 
 **Files:**
-- Create/Modify: `frontend/src/modules/document-workbench/components/*.vue`
-- Modify: `frontend/src/modules/document-workbench/views/DocumentWorkbenchView.vue`
-- Modify: `frontend/src/modules/document-workbench/routes.ts`
-- Modify: `frontend/src/modules/document-workbench/index.ts`
+- Create/Modify: `frontend/src/modules/documentworkbench/components/*.vue`
+- Modify: `frontend/src/modules/documentworkbench/views/DocumentWorkbenchView.vue`
+- Modify: `frontend/src/modules/documentworkbench/routes.ts`
+- Modify: `frontend/src/modules/documentworkbench/index.ts`
 - Modify: `frontend/src/router/index.ts`
 
 - [ ] **Step 1: Implement `DocumentTypePicker.vue`**
@@ -1560,7 +1560,7 @@ In module `routes.ts`, export:
 ```ts
 export const documentWorkbenchRoutes = [
   {
-    path: '/document-workbench',
+    path: '/documentworkbench',
     name: 'DocumentWorkbench',
     component: () => import('./views/DocumentWorkbenchView.vue'),
     meta: { title: '结构化文档工作台' },
@@ -1570,7 +1570,7 @@ export const documentWorkbenchRoutes = [
 
 In module `index.ts`, export `documentWorkbenchRoutes`.
 
-In `frontend/src/router/index.ts`, import and spread the routes into layout children. If root currently redirects to todo, change root redirect to `/document-workbench`.
+In `frontend/src/router/index.ts`, import and spread the routes into layout children. If root currently redirects to todo, change root redirect to `/documentworkbench`.
 
 - [ ] **Step 9: Run frontend checks**
 
@@ -1587,7 +1587,7 @@ Expected: all pass.
 Run:
 
 ```bash
-git add frontend/src/modules/document-workbench frontend/src/router/index.ts
+git add frontend/src/modules/documentworkbench frontend/src/router/index.ts
 git commit -m "feat: build document workbench ui"
 ```
 
@@ -1618,13 +1618,13 @@ In another terminal:
 cd frontend && npm run dev
 ```
 
-Expected: frontend starts and serves the route containing `/document-workbench`.
+Expected: frontend starts and serves the route containing `/documentworkbench`.
 
 - [ ] **Step 3: Exercise Markdown flow**
 
 In browser:
 
-1. Open `/document-workbench`.
+1. Open `/documentworkbench`.
 2. Choose `会议纪要`.
 3. Choose Markdown.
 4. Paste:
