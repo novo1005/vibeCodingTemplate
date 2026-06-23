@@ -3,7 +3,7 @@ import { AppError } from '@/utils/http-error'
 import { createDeterministicAiGateway, createHttpAiGateway, extractJsonObject } from './ai-gateway'
 import { documentTypes } from './document-type-catalog'
 import { createDisabledLarkGateway } from './lark-gateway'
-import { createDocumentWorkbenchService } from './documentworkbench.service'
+import { createDocumentWorkbenchService, getAiConfigStatus } from './documentworkbench.service'
 import { normalizeDraft } from './normalizer'
 import { frameworks } from './framework-catalog'
 import type { CreateSessionInput } from './documentworkbench.repository'
@@ -188,6 +188,44 @@ async function testHttpGatewayReportsReadableGatewayErrors() {
   )
 }
 
+function testAiConfigStatus() {
+  assert.deepEqual(
+    getAiConfigStatus({
+      AI_GATEWAY_API_KEY: undefined,
+      AI_GATEWAY_BASE_URL: 'https://ops-ai-gateway.yc345.tv/v1/chat/completions',
+      AI_GATEWAY_DEFAULT_MODEL: 'local',
+    }),
+    {
+      status: 'missing-api-key',
+      message: 'AI_GATEWAY_API_KEY 未配置或仍被注释，当前只会使用本地规则演示模式。',
+    },
+  )
+
+  assert.deepEqual(
+    getAiConfigStatus({
+      AI_GATEWAY_API_KEY: 'key',
+      AI_GATEWAY_BASE_URL: 'https://ops-ai-gateway.yc345.tv/v1/chat/completions',
+      AI_GATEWAY_DEFAULT_MODEL: 'local',
+    }),
+    {
+      status: 'model-local',
+      message: 'AI 网关 key 已配置，但默认模型仍是 local，请把 AI_GATEWAY_DEFAULT_MODEL 改成公司网关模型名。',
+    },
+  )
+
+  assert.deepEqual(
+    getAiConfigStatus({
+      AI_GATEWAY_API_KEY: 'key',
+      AI_GATEWAY_BASE_URL: 'https://ops-ai-gateway.yc345.tv/v1/chat/completions',
+      AI_GATEWAY_DEFAULT_MODEL: 'company-model',
+    }),
+    {
+      status: 'ready',
+      message: 'AI 网关已配置。',
+    },
+  )
+}
+
 function createInMemoryRepositoryForTest(sessions: Map<string, DocumentWorkbenchSession>) {
   return {
     async create(input: CreateSessionInput) {
@@ -268,6 +306,7 @@ testExtractJsonObject()
 await testDeterministicGateway()
 await testHttpGatewayUsesAiForPreviewAndFinalize()
 await testHttpGatewayReportsReadableGatewayErrors()
+testAiConfigStatus()
 await testMarkdownServiceFlow()
 
 console.log('document-workbench tests: OK')

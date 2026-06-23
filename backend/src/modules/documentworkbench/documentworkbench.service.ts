@@ -22,6 +22,12 @@ interface SessionRepository {
 }
 
 type FinalizeInput = typeof DocumentWorkbenchFinalizeBodySchema._type
+export type AiConfigStatusCode = 'missing-api-key' | 'model-local' | 'ready'
+
+export interface AiConfigStatus {
+  status: AiConfigStatusCode
+  message: string
+}
 
 interface ServiceDeps {
   repository: SessionRepository
@@ -40,12 +46,38 @@ function touch(session: DocumentWorkbenchSession, now: string) {
   return { ...session, updatedAt: now }
 }
 
+export function getAiConfigStatus(input: {
+  AI_GATEWAY_API_KEY?: string
+  AI_GATEWAY_BASE_URL: string
+  AI_GATEWAY_DEFAULT_MODEL: string
+}): AiConfigStatus {
+  if (!input.AI_GATEWAY_API_KEY?.trim()) {
+    return {
+      status: 'missing-api-key',
+      message: 'AI_GATEWAY_API_KEY 未配置或仍被注释，当前只会使用本地规则演示模式。',
+    }
+  }
+
+  if (input.AI_GATEWAY_DEFAULT_MODEL.trim().toLowerCase() === 'local') {
+    return {
+      status: 'model-local',
+      message: 'AI 网关 key 已配置，但默认模型仍是 local，请把 AI_GATEWAY_DEFAULT_MODEL 改成公司网关模型名。',
+    }
+  }
+
+  return {
+    status: 'ready',
+    message: 'AI 网关已配置。',
+  }
+}
+
 export function createDocumentWorkbenchService(deps: ServiceDeps) {
   return {
     getConfig() {
       const models = env.AI_GATEWAY_MODELS.split(',')
         .map((item) => item.trim())
         .filter(Boolean)
+      const aiStatus = getAiConfigStatus(env)
       return {
         models,
         defaultModel: env.AI_GATEWAY_DEFAULT_MODEL,
@@ -55,7 +87,8 @@ export function createDocumentWorkbenchService(deps: ServiceDeps) {
           label,
           description,
         })),
-        aiConnected: Boolean(env.AI_GATEWAY_API_KEY),
+        aiConnected: aiStatus.status === 'ready',
+        aiStatus,
         larkConnected: false,
       }
     },

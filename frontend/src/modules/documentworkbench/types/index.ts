@@ -120,6 +120,10 @@ export interface WorkbenchConfig {
   documentTypes: DocumentType[]
   frameworks: FrameworkSummary[]
   aiConnected: boolean
+  aiStatus: {
+    status: 'missing-api-key' | 'model-local' | 'ready'
+    message: string
+  }
   larkConnected: boolean
 }
 

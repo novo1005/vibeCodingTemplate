@@ -19,6 +19,13 @@ export const useDocumentWorkbenchStore = defineStore('document-workbench', () =>
   const defaultModel = ref('local')
   const selectedModel = ref('local')
   const aiConnected = ref(false)
+  const aiStatus = ref<{
+    status: 'missing-api-key' | 'model-local' | 'ready'
+    message: string
+  }>({
+    status: 'missing-api-key',
+    message: '正在读取 AI 网关配置。',
+  })
   const larkConnected = ref(false)
   const documentTypes = ref<DocumentType[]>([])
   const selectedDocumentType = ref<DocumentTypeId | ''>('')
@@ -53,6 +60,7 @@ export const useDocumentWorkbenchStore = defineStore('document-workbench', () =>
       defaultModel.value = config.defaultModel
       selectedModel.value = config.defaultModel
       aiConnected.value = config.aiConnected
+      aiStatus.value = config.aiStatus
       larkConnected.value = config.larkConnected
       documentTypes.value = config.documentTypes
     } catch (error) {
@@ -161,6 +169,7 @@ export const useDocumentWorkbenchStore = defineStore('document-workbench', () =>
     defaultModel,
     selectedModel,
     aiConnected,
+    aiStatus,
     larkConnected,
     documentTypes,
     selectedDocumentType,

@@ -18,6 +18,7 @@ const {
   models,
   selectedModel,
   aiConnected,
+  aiStatus,
   status,
   errorMessage,
   originalTitle,
@@ -98,8 +99,9 @@ function publishDocument() {
     </header>
 
     <p v-if="!aiConnected" class="document-workbench__warning">
-      当前未连接 AI 网关，只会使用本地规则演示结构，不会真正改写文档。请在后端
-      <code>.env</code> 配置 <code>AI_GATEWAY_API_KEY</code> 和模型后重启服务。
+      {{ aiStatus.message }}
+      请在后端 <code>.env</code> 配置 <code>AI_GATEWAY_API_KEY</code>、
+      <code>AI_GATEWAY_DEFAULT_MODEL</code> 后重启服务。
     </p>
 
     <p v-if="errorMessage" class="document-workbench__error">{{ errorMessage }}</p>
