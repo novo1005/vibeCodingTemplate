@@ -1,17 +1,33 @@
 import { http } from '@/utils/request'
 import type {
-  DocumentWorkbench,
-  DocumentWorkbenchCreateInput,
-  DocumentWorkbenchUpdateInput,
+  FinalizedDocument,
+  FrameworkScore,
+  ImportDraftInput,
+  ImportResponse,
+  PreviewInput,
+  QualityCheckItem,
+  StructuredPreview,
+  WorkbenchConfig,
 } from '../types'
 
 export const documentWorkbenchApi = {
-  list: (signal?: AbortSignal) => http.get<DocumentWorkbench[]>('/documentworkbench', { signal }),
-  get: (id: string, signal?: AbortSignal) =>
-    http.get<DocumentWorkbench>(`/documentworkbench/${id}`, { signal }),
-  create: (input: DocumentWorkbenchCreateInput) =>
-    http.post<DocumentWorkbench>('/documentworkbench', input),
-  update: (id: string, input: DocumentWorkbenchUpdateInput) =>
-    http.patch<DocumentWorkbench>(`/documentworkbench/${id}`, input),
-  remove: (id: string) => http.delete<{ id: string }>(`/documentworkbench/${id}`),
+  config: () => http.get<WorkbenchConfig>('/documentworkbench/config'),
+  importDraft: (input: ImportDraftInput) =>
+    http.post<ImportResponse>('/documentworkbench/import', input),
+  recommend: (sessionId: string, model: string) =>
+    http.post<FrameworkScore[]>(`/documentworkbench/${sessionId}/recommend`, { model }),
+  preview: (sessionId: string, input: PreviewInput) =>
+    http.post<StructuredPreview>(`/documentworkbench/${sessionId}/preview`, input),
+  qualityCheck: (sessionId: string, model: string) =>
+    http.post<QualityCheckItem[]>(`/documentworkbench/${sessionId}/quality-check`, { model }),
+  saveSupplements: (
+    sessionId: string,
+    input: Array<{ id: string; question: string; answer: string; relatedSectionId?: string }>,
+  ) => http.patch(`/documentworkbench/${sessionId}/supplements`, input),
+  finalize: (
+    sessionId: string,
+    input: { model: string; acceptedQualityRuleIds: string[]; skipDeAi: boolean },
+  ) => http.post<FinalizedDocument>(`/documentworkbench/${sessionId}/finalize`, input),
+  publish: (sessionId: string, input: { title: string; confirmed: true }) =>
+    http.post<{ url: string }>(`/documentworkbench/${sessionId}/publish`, input),
 }
