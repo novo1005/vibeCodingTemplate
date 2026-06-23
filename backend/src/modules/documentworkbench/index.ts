@@ -14,7 +14,7 @@ export default fp(
 
 export type { DocumentWorkbench } from './documentworkbench.types'
 export {
-  DocumentWorkbenchCreateSchema,
-  DocumentWorkbenchUpdateSchema,
-  DocumentWorkbenchSchema,
+  DocumentWorkbenchImportBodySchema,
+  DocumentWorkbenchPreviewBodySchema,
+  StructuredPreviewSchema,
 } from './documentworkbench.schema'
