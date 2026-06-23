@@ -25,10 +25,17 @@ function onModelChange(event: Event) {
 }
 
 function submitDraft() {
+  if (sourceType.value === 'markdown') {
+    emit('submit', {
+      sourceType: 'markdown',
+      markdown: markdown.value.trim(),
+    })
+    return
+  }
+
   emit('submit', {
-    sourceType: sourceType.value,
+    sourceType: 'lark',
     larkUrl: larkUrl.value.trim(),
-    markdown: markdown.value.trim(),
   })
 }
 </script>
