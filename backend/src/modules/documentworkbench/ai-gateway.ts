@@ -6,6 +6,12 @@ import type {
   QualityCheckItem,
   StructuredPreview,
 } from './documentworkbench.schema'
+import {
+  FinalizedDocumentSchema,
+  FrameworkScoreSchema,
+  QualityCheckItemSchema,
+  StructuredPreviewSchema,
+} from './documentworkbench.schema'
 import type { DocumentTypeDefinition, FrameworkDefinition } from './documentworkbench.types'
 
 export interface RecommendInput {
@@ -55,8 +61,15 @@ export function extractJsonObject(text: string): unknown {
   return JSON.parse(stripped.slice(first, last + 1))
 }
 
-function paragraphSummary(paragraphs: NormalizedParagraph[]) {
-  return paragraphs.map((item) => item.text).join('\n').slice(0, 1200)
+function paragraphSummary(paragraphs: NormalizedParagraph[], sectionIndex = 0) {
+  if (paragraphs.length === 0) return ''
+  const windowSize = Math.max(1, Math.ceil(paragraphs.length / 3))
+  const start = (sectionIndex * windowSize) % paragraphs.length
+  return paragraphs
+    .slice(start, start + windowSize)
+    .map((item) => item.text)
+    .join('\n')
+    .slice(0, 1200)
 }
 
 function makeQualityChecks(documentType: DocumentTypeDefinition, markdown: string): QualityCheckItem[] {
@@ -97,16 +110,21 @@ export function createDeterministicAiGateway(): AiGateway {
     },
 
     async preview(input) {
-      const source = paragraphSummary(input.paragraphs)
-      const sections = input.documentType.sectionTemplate.map((section) => ({
-        slotId: section.id,
-        heading: section.heading,
-        content: source ? `${section.description}\n\n${source}` : section.description,
-        sourceParagraphIds: input.paragraphs.slice(0, 3).map((item) => item.id),
-        rewriteNote: `按「${input.documentType.label}」结构和「${input.framework.label}」框架整理。`,
-        evidenceStatus: input.paragraphs.length > 0 ? ('supported' as const) : ('missing' as const),
-        missingQuestion: input.paragraphs.length > 0 ? null : `请补充「${section.heading}」所需信息。`,
-      }))
+      const sections = input.documentType.sectionTemplate.map((section, index) => {
+        const source = paragraphSummary(input.paragraphs, index)
+        const sourceParagraphIds = input.paragraphs
+          .slice(index % Math.max(1, input.paragraphs.length), index % Math.max(1, input.paragraphs.length) + 1)
+          .map((item) => item.id)
+        return {
+          slotId: section.id,
+          heading: section.heading,
+          content: source ? `${section.description}\n\n${source}` : section.description,
+          sourceParagraphIds,
+          rewriteNote: `当前为本地规则模式，仅做结构占位；配置 AI 网关后会生成改写版本。`,
+          evidenceStatus: input.paragraphs.length > 0 ? ('supported' as const) : ('missing' as const),
+          missingQuestion: input.paragraphs.length > 0 ? null : `请补充「${section.heading}」所需信息。`,
+        }
+      })
       const markdown = [
         `# ${input.documentType.label}-结构化版本`,
         '',
@@ -141,7 +159,12 @@ export function createDeterministicAiGateway(): AiGateway {
   }
 }
 
-async function callChatCompletion(env: Env, model: string, messages: Array<{ role: string; content: string }>) {
+async function callChatCompletion(
+  env: Env,
+  model: string,
+  messages: Array<{ role: string; content: string }>,
+  fetcher: typeof fetch,
+) {
   if (!env.AI_GATEWAY_API_KEY) {
     throw new Error('AI gateway API key is not configured')
   }
@@ -149,7 +172,7 @@ async function callChatCompletion(env: Env, model: string, messages: Array<{ rol
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), env.AI_GATEWAY_TIMEOUT_MS)
   try {
-    const response = await fetch(env.AI_GATEWAY_BASE_URL, {
+    const response = await fetcher(env.AI_GATEWAY_BASE_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${env.AI_GATEWAY_API_KEY}`,
@@ -172,15 +195,22 @@ async function callChatCompletion(env: Env, model: string, messages: Array<{ rol
   }
 }
 
-export function createHttpAiGateway(env: Env): AiGateway {
-  const fallback = createDeterministicAiGateway()
+function parseOrThrow<T>(name: string, schema: { parse: (value: unknown) => T }, value: unknown): T {
+  try {
+    return schema.parse(value)
+  } catch (error) {
+    throw new Error(`AI gateway returned invalid ${name}: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
 
+export function createHttpAiGateway(env: Env, fetcher: typeof fetch = fetch): AiGateway {
   return {
     async recommend(input) {
       const output = await callChatCompletion(env, input.model, [
         {
           role: 'system',
-          content: 'Return JSON with a scores array. Do not invent facts.',
+          content:
+            '你是中文业务文档架构顾问。只返回 JSON：{"scores":[...]}。不要编造事实，按文档类型、原文内容和框架适配度评分。',
         },
         {
           role: 'user',
@@ -191,18 +221,26 @@ export function createHttpAiGateway(env: Env): AiGateway {
             paragraphs: input.paragraphs,
           }),
         },
-      ])
+      ], fetcher)
       if (typeof output === 'object' && output && 'scores' in output && Array.isArray(output.scores)) {
-        return output.scores as FrameworkScore[]
+        return output.scores.map((score) => parseOrThrow('FrameworkScore', FrameworkScoreSchema, score))
       }
-      return fallback.recommend(input)
+      throw new Error('AI gateway returned invalid recommendation payload')
     },
 
     async preview(input) {
       const output = await callChatCompletion(env, input.model, [
         {
           role: 'system',
-          content: 'Return JSON matching StructuredPreview. Keep source mappings. Do not invent facts.',
+          content: [
+            '你是中文业务文档改稿助手。必须按用户选择的文档类型规范和结构框架，把松散初稿改成可提交的结构化版本。',
+            '只返回 JSON，结构必须匹配 StructuredPreview。',
+            '必须真实改写：合并重复、补齐标题、调整顺序、压缩口水话、把结论前置。',
+            '不要把同一段原文原封不动复制到每个章节。',
+            '不要编造事实；缺信息时在 missingQuestion 标出问题。',
+            '每个 section.content 必须是改写后的正文，不是写作说明。',
+            'markdown 必须是完整的新文档。',
+          ].join('\n'),
         },
         {
           role: 'user',
@@ -214,19 +252,62 @@ export function createHttpAiGateway(env: Env): AiGateway {
             supplements: input.supplements,
           }),
         },
-      ])
-      if (typeof output === 'object' && output && 'markdown' in output) {
-        return output as StructuredPreview
-      }
-      return fallback.preview(input)
+      ], fetcher)
+      return parseOrThrow('StructuredPreview', StructuredPreviewSchema, output)
     },
 
     async qualityCheck(input) {
-      return fallback.qualityCheck(input)
+      const output = await callChatCompletion(env, input.model, [
+        {
+          role: 'system',
+          content: [
+            '你是中文业务文档质检助手。只返回 JSON：{"checks":[...]}。',
+            '按文档类型的 writingRules、methodologyRules、qualityRules 检查结构化预览。',
+            '指出缺失信息、需要用户确认的事实和可直接修改的表达问题。',
+            '不要给泛泛建议，每条 suggestedRevision 要能直接指导修改。',
+          ].join('\n'),
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            task: 'quality-check',
+            documentType: input.documentType,
+            preview: input.preview,
+          }),
+        },
+      ], fetcher)
+      if (typeof output === 'object' && output && 'checks' in output && Array.isArray(output.checks)) {
+        return output.checks.map((check) =>
+          parseOrThrow('QualityCheckItem', QualityCheckItemSchema, check),
+        )
+      }
+      throw new Error('AI gateway returned invalid quality check payload')
     },
 
     async finalize(input) {
-      return fallback.finalize(input)
+      const output = await callChatCompletion(env, input.model, [
+        {
+          role: 'system',
+          content: [
+            '你是中文终稿编辑。只返回 JSON，结构必须匹配 FinalizedDocument。',
+            '基于 StructuredPreview 生成最终可提交文档。',
+            '执行去 AI 味：去掉模板腔、讲义腔、路标词堆叠、机械小标题和重复收束句。',
+            '保留原意、事实、数据、责任人、时间节点和标题层级，不新增事实。',
+            input.skipDeAi ? '用户选择跳过去 AI 味，只做必要格式整理。' : '必须让正文读起来像真人业务文档，不像模型答案。',
+          ].join('\n'),
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            task: 'finalize',
+            documentType: input.documentType,
+            preview: input.preview,
+            acceptedQualityRuleIds: input.acceptedQualityRuleIds,
+            skipDeAi: input.skipDeAi,
+          }),
+        },
+      ], fetcher)
+      return parseOrThrow('FinalizedDocument', FinalizedDocumentSchema, output)
     },
   }
 }

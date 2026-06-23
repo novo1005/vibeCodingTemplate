@@ -18,6 +18,8 @@ export const useDocumentWorkbenchStore = defineStore('document-workbench', () =>
   const models = ref<string[]>([])
   const defaultModel = ref('local')
   const selectedModel = ref('local')
+  const aiConnected = ref(false)
+  const larkConnected = ref(false)
   const documentTypes = ref<DocumentType[]>([])
   const selectedDocumentType = ref<DocumentTypeId | ''>('')
   const sessionId = ref('')
@@ -50,6 +52,8 @@ export const useDocumentWorkbenchStore = defineStore('document-workbench', () =>
       models.value = config.models
       defaultModel.value = config.defaultModel
       selectedModel.value = config.defaultModel
+      aiConnected.value = config.aiConnected
+      larkConnected.value = config.larkConnected
       documentTypes.value = config.documentTypes
     } catch (error) {
       setFailure(error)
@@ -156,6 +160,8 @@ export const useDocumentWorkbenchStore = defineStore('document-workbench', () =>
     models,
     defaultModel,
     selectedModel,
+    aiConnected,
+    larkConnected,
     documentTypes,
     selectedDocumentType,
     selectedDocumentTypeDetail,

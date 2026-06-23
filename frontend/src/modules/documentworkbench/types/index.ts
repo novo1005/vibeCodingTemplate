@@ -119,6 +119,7 @@ export interface WorkbenchConfig {
   defaultModel: string
   documentTypes: DocumentType[]
   frameworks: FrameworkSummary[]
+  aiConnected: boolean
   larkConnected: boolean
 }
 

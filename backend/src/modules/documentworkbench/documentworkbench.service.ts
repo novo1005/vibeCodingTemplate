@@ -55,7 +55,8 @@ export function createDocumentWorkbenchService(deps: ServiceDeps) {
           label,
           description,
         })),
-        larkConnected: Boolean(env.AI_GATEWAY_API_KEY),
+        aiConnected: Boolean(env.AI_GATEWAY_API_KEY),
+        larkConnected: false,
       }
     },
 

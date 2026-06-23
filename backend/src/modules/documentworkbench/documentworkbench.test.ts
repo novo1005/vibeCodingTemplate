@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { createDeterministicAiGateway, extractJsonObject } from './ai-gateway'
+import { createDeterministicAiGateway, createHttpAiGateway, extractJsonObject } from './ai-gateway'
 import { documentTypes } from './document-type-catalog'
 import { createDisabledLarkGateway } from './lark-gateway'
 import { createDocumentWorkbenchService } from './documentworkbench.service'
@@ -77,6 +77,82 @@ async function testDeterministicGateway() {
     paragraphs: [{ id: 'p-001', index: 0, text: 'KR 达成 80%，需要复盘原因。' }],
   })
   assert.equal(recommendation[0]?.frameworkId, 'four-f')
+}
+
+async function testHttpGatewayUsesAiForPreviewAndFinalize() {
+  const calls: unknown[] = []
+  const aiPreview = {
+    frameworkId: 'prep',
+    title: 'AI 改写后的会议纪要',
+    summary: 'AI 已按会议纪要规范重新组织内容。',
+    sections: [
+      {
+        slotId: 'meeting-background',
+        heading: '会议背景',
+        content: '团队决定上线文档工具，以减少反复返工。',
+        sourceParagraphIds: ['p-001'],
+        rewriteNote: '压缩原文并补足会议背景表达。',
+        evidenceStatus: 'supported',
+        missingQuestion: null,
+      },
+    ],
+    qualityChecks: [],
+    missingCount: 0,
+    markdown: '# AI 改写后的会议纪要\n\n团队决定上线文档工具，以减少反复返工。',
+  }
+  const aiFinal = {
+    ...aiPreview,
+    markdown: '# AI 终稿\n\n团队决定上线文档工具，先由张三在 6 月 30 日前完成 API。',
+    deAiNotes: ['删掉模板腔，保留责任人与时间信息。'],
+  }
+  const fetchMock: typeof fetch = async (_url, init) => {
+    const body = JSON.parse(String(init?.body))
+    calls.push(body)
+    const payload = body.messages.some((message: { content: string }) =>
+      message.content.includes('"task":"finalize"'),
+    )
+      ? aiFinal
+      : aiPreview
+    return new Response(
+      JSON.stringify({
+        choices: [{ message: { content: JSON.stringify(payload) } }],
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
+  const gateway = createHttpAiGateway(
+    {
+      AI_GATEWAY_API_KEY: 'test-key',
+      AI_GATEWAY_BASE_URL: 'https://example.test/v1/chat/completions',
+      AI_GATEWAY_TIMEOUT_MS: 30000,
+    } as never,
+    fetchMock,
+  )
+
+  const preview = await gateway.preview({
+    model: 'company-model',
+    documentType: documentTypes.find((item) => item.typeId === 'meeting-minutes')!,
+    frameworks,
+    framework: frameworks.find((item) => item.frameworkId === 'prep')!,
+    paragraphs: [
+      { id: 'p-001', index: 0, text: '决定上线文档工具。' },
+      { id: 'p-002', index: 1, text: '张三 6 月 30 日前完成 API。' },
+    ],
+    supplements: [],
+  })
+  assert.equal(preview.markdown, aiPreview.markdown)
+
+  const finalDocument = await gateway.finalize({
+    model: 'company-model',
+    documentType: documentTypes.find((item) => item.typeId === 'meeting-minutes')!,
+    preview,
+    acceptedQualityRuleIds: [],
+    skipDeAi: false,
+  })
+  assert.equal(finalDocument.markdown, aiFinal.markdown)
+  assert.ok(finalDocument.deAiNotes.includes('删掉模板腔，保留责任人与时间信息。'))
+  assert.equal(calls.length, 2)
 }
 
 function createInMemoryRepositoryForTest(sessions: Map<string, DocumentWorkbenchSession>) {
@@ -157,6 +233,7 @@ testPreviewSchemaAcceptsFramework()
 testNormalizeDraft()
 testExtractJsonObject()
 await testDeterministicGateway()
+await testHttpGatewayUsesAiForPreviewAndFinalize()
 await testMarkdownServiceFlow()
 
 console.log('document-workbench tests: OK')

@@ -17,6 +17,7 @@ const {
   selectedDocumentTypeDetail,
   models,
   selectedModel,
+  aiConnected,
   status,
   errorMessage,
   originalTitle,
@@ -95,6 +96,11 @@ function publishDocument() {
         <span v-if="selectedDocumentTypeDetail">已选：{{ selectedDocumentTypeDetail.label }}</span>
       </div>
     </header>
+
+    <p v-if="!aiConnected" class="document-workbench__warning">
+      当前未连接 AI 网关，只会使用本地规则演示结构，不会真正改写文档。请在后端
+      <code>.env</code> 配置 <code>AI_GATEWAY_API_KEY</code> 和模型后重启服务。
+    </p>
 
     <p v-if="errorMessage" class="document-workbench__error">{{ errorMessage }}</p>
 
@@ -227,6 +233,22 @@ function publishDocument() {
     background: fade(@color-danger, 8%);
     border: 1px solid fade(@color-danger, 25%);
     border-radius: @radius-md;
+  }
+
+  &__warning {
+    padding: @space-md @space-lg;
+    margin-bottom: @space-lg;
+    color: @color-warning;
+    background: fade(@color-warning, 10%);
+    border: 1px solid fade(@color-warning, 30%);
+    border-radius: @radius-md;
+
+    code {
+      padding: 0 4px;
+      color: @color-text;
+      background: @color-bg-muted;
+      border-radius: @radius-sm;
+    }
   }
 }
 
