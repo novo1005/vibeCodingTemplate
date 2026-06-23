@@ -31,6 +31,9 @@ coverage/
 # Vendored plugins (run: bash scripts/install-superpowers.sh)
 vendor/superpowers/
 
+# Local git worktrees
+.worktrees/
+
 # Sqlite data
 backend/data/
 *.db
