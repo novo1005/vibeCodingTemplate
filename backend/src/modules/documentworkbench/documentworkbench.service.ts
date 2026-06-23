@@ -8,30 +8,30 @@ import type {
 
 export const documentWorkbenchService = {
   list(): Promise<DocumentWorkbench[]> {
-    return documentWorkbenchRepository.list()
+    return documentWorkbenchRepository.legacyList()
   },
 
   async get(id: string): Promise<DocumentWorkbench> {
-    const item = await documentWorkbenchRepository.findById(id)
+    const item = await documentWorkbenchRepository.legacyFindById(id)
     if (!item) throw NotFoundError('document workbench item')
     return item
   },
 
   create(input: DocumentWorkbenchCreateInput): Promise<DocumentWorkbench> {
-    return documentWorkbenchRepository.create(input)
+    return documentWorkbenchRepository.legacyCreate(input)
   },
 
   async update(id: string, input: DocumentWorkbenchUpdateInput): Promise<DocumentWorkbench> {
-    const exists = await documentWorkbenchRepository.findById(id)
+    const exists = await documentWorkbenchRepository.legacyFindById(id)
     if (!exists) throw NotFoundError('document workbench item')
 
-    const updated = await documentWorkbenchRepository.update(id, input)
+    const updated = await documentWorkbenchRepository.legacyUpdate(id, input)
     if (!updated) throw NotFoundError('document workbench item')
     return updated
   },
 
   async remove(id: string): Promise<{ id: string }> {
-    const ok = await documentWorkbenchRepository.remove(id)
+    const ok = await documentWorkbenchRepository.legacyRemove(id)
     if (!ok) throw NotFoundError('document workbench item')
     return { id }
   },

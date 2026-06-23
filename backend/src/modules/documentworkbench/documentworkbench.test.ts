@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { documentTypes } from './document-type-catalog'
+import { normalizeDraft } from './normalizer'
 import { frameworks } from './framework-catalog'
 import {
   DocumentWorkbenchImportBodySchema,
@@ -44,9 +45,23 @@ function testPreviewSchemaAcceptsFramework() {
   assert.equal(parsed.frameworkId, 'pyramid')
 }
 
+function testNormalizeDraft() {
+  const result = normalizeDraft({
+    title: '原始标题',
+    markdown: '# 原始标题\n\n第一段内容。\n\n- 列表内容\n\n第二段内容。',
+  })
+  assert.equal(result.title, '原始标题')
+  assert.deepEqual(
+    result.paragraphs.map((item) => item.id),
+    ['p-001', 'p-002', 'p-003'],
+  )
+  assert.equal(result.paragraphs[1]?.text, '列表内容')
+}
+
 testDocumentTypes()
 testFrameworks()
 testImportSchemaRequiresDocumentType()
 testPreviewSchemaAcceptsFramework()
+testNormalizeDraft()
 
 console.log('document-workbench tests: OK')
