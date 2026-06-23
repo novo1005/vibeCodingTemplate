@@ -1,4 +1,7 @@
 import { z } from 'zod'
+import { loadEnvFile } from './env-file'
+
+loadEnvFile()
 
 /**
  * Environment variable schema. Validated once at process start; downstream
